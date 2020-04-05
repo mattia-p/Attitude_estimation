@@ -1,9 +1,9 @@
 <launch>
-    <arg name='model' default="/home/mattia/catkin_ws/src/attitude_estimator/urdf/phone.urdf"/>
+    <arg name='model' default="$(find attitude_estimator)/urdf/phone.urdf"/>
 
     <param name="robot_description" command="cat $(arg model)" />
 
-    <node name="attitude_estimator" pkg="attitude_estimator" type="complementary_filter.py" output="screen"/>
+    <node name="attitude_estimator" pkg="attitude_estimator" type="complementary_filter_oop.py" output="screen"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
     <node name="rviz" pkg="rviz" type="rviz" args="-d /home/mattia/catkin_ws/src/attitude_estimator/rviz/rviz_config.rviz" />
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
