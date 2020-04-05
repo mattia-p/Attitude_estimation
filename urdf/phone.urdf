@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<robot name="phone">
+
+    <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+    </material>
+
+    <material name="white">
+        <color rgba="1 1 1 1"/>
+    </material>
+
+    <link name="phone">
+        <visual>
+            <geometry>
+                <box size="0.2 0.45 0.03"/>
+            </geometry>
+            <material name="white"/>
+        </visual>
+    </link>
+
+    <link name="screen">
+        <visual>
+            <geometry>
+                <box size="0.16 0.35 0.01"/>
+            </geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+
+    <joint name="phone_to_screen" type="fixed">
+        <parent link="phone"/>
+        <child link="screen"/>
+        <origin xyz="0 0.03 0.015"/>
+    </joint>
+
+</robot>
