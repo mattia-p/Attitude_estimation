@@ -4,6 +4,8 @@
 This small project is a ROS package containing an implementation of a complementary filter for attitude estimation of a phone.
 This could be used for some state estimation required for a robotics project. 
 
+Assumption: We assume that the sensor is on average not accelerating in translation, as if the sensor was free to rotate, but not to translate. 
+
 
 
 ## Launch file
