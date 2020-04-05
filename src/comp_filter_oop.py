@@ -22,15 +22,19 @@ class Complementary_filter:
 
         self.frequency = 10.0
         self.rate = rospy.Rate(self.frequency)
+        self.dt = 1.0 / self.frequency
         self.angular_velocity = None
         self.linear_acceleration = None
-        self.nb_iterations_calibration = 200
+        self.nb_iterations_calibration = 10
         self.acc_x_bias = 0.0
         self.acc_y_bias = 0.0
         self.acc_z_bias = 0.0
         self.ang_vel_x_bias = 0.0
         self.ang_vel_y_bias = 0.0
         self.ang_vel_z_bias = 0.0
+        self.g = 9.81
+        self.rho_phi = 0.05
+        self.rho_theta = 0.05
 
         # self.calibration()
 
@@ -61,9 +65,53 @@ class Complementary_filter:
         print ' ------------------------- '
         print 'Attitude estimator started'
         print ' ------------------------- '
+        phi_est_prev = 0.0
+        theta_est_prev = 0.0
+        psi_est_prev = 0.0
 
         while not rospy.is_shutdown():
             print 'Inside while'
+
+            phi_meas = (self.linear_acceleration.y - self.acc_y_bias) / self.g
+            phi_est  = phi_est_prev + (self.angular_velocity.x - self.ang_vel_x_bias) * self.dt
+            phi = (1 - self.rho_phi) * phi_est + self.rho_phi * phi_meas
+            phi_est_prev = phi_est
+
+            theta_meas = - (self.linear_acceleration.x - self.acc_x_bias) / self.g
+            theta_est = theta_est_prev + (self.angular_velocity.y - self.ang_vel_y_bias)* self.dt
+            theta = (1 - self.rho_theta) * theta_est + self.rho_theta * theta_meas
+            theta_est_prev = theta_est
+
+            psi_est = psi_est_prev + (self.angular_velocity.z - self.ang_vel_z_bias) * self.dt
+            psi = psi_est
+            psi_est_prev = psi_est
+
+            phi_msg = Float32()
+            phi_msg.data = phi
+            self.pub_phi.publish(phi_msg)
+
+            theta_msg = Float32()
+            theta_msg.data = theta
+            self.pub_theta.publish(theta_msg)
+
+            psi_msg = Float32()
+            psi_msg.data = psi
+            self.pub_psi.publish(psi_msg)
+
+
+            # tf broadcaster
+            roll = theta
+            pitch = phi
+            yaw = psi
+
+            br = tf.TransformBroadcaster()
+            br.sendTransform((0, 0, 0),
+                         tf.transformations.quaternion_from_euler(pitch, roll, yaw),
+                         rospy.Time.now(),
+                         "phone",
+                         "world")
+
+
             self.rate.sleep()
 
     def calibration(self):
