@@ -13,64 +13,58 @@ from tf2_msgs.msg import TFMessage
 class Complementary_filter:
 
     def __init__(self):
+        rospy.init_node('complementary_filter')
+        rospy.Subscriber("/android/imu", Imu, self.callback_imu)
 
         self.pub_theta = rospy.Publisher('theta', Float32, queue_size = 10)
         self.pub_psi   = rospy.Publisher('psi', Float32, queue_size = 10)
         self.pub_phi   = rospy.Publisher('phi', Float32, queue_size = 10)
 
-        self.imu_subscriber = rospy.Subscriber("/android/imu", Imu, self.callback_imu)
-
+        # Parameters
+        self.g = 9.81
         self.frequency = 10.0
         self.rate = rospy.Rate(self.frequency)
         self.dt = 1.0 / self.frequency
-        self.angular_velocity = None
-        self.linear_acceleration = None
-        self.nb_iterations_calibration = 10
-        self.acc_x_bias = 0.0
+
+        self.angular_velocity    = None  # Angular velocity before we subscribe to it
+        self.linear_acceleration = None  # Linear acceleration before we subscribe to it
+
+        self.nb_iterations_calibration = 200 # Number of points acquired during calibration
+        self.acc_x_bias = 0.0       # Bias linear acceleration in the x direction
         self.acc_y_bias = 0.0
         self.acc_z_bias = 0.0
         self.ang_vel_x_bias = 0.0
         self.ang_vel_y_bias = 0.0
         self.ang_vel_z_bias = 0.0
-        self.g = 9.81
-        self.rho_phi = 0.05
-        self.rho_theta = 0.05
 
-        # self.calibration()
+        self.rho_phi = 0.05    # Scalar tuning constant for phi
+        self.rho_theta = 0.05  # Scalar tuning constant for theta
 
-        # self.calibration()
         self.complementary_filter_loop()
 
     def callback_imu(self, msg):
         self.angular_velocity = msg.angular_velocity
         self.linear_acceleration = msg.linear_acceleration
-        # print self.angular_velocity
-
-
-    # def calibration(self):
-
 
     def complementary_filter_loop(self):
 
-
-        # While loop because the subscrition to topics takes some time
+        # While loop because the subscrition to topics takes some time - probably because of my android sensor driver
         print 'Waiting to subscribe to topics'
         while self.linear_acceleration == None and self.angular_velocity == None and not rospy.is_shutdown():
             self.rate.sleep()
-        print 'Subscribed to topics'
-        print ' '
+        print 'Subscribed to topics \n'
 
         self.calibration()
 
         print ' ------------------------- '
         print 'Attitude estimator started'
         print ' ------------------------- '
-        phi_est_prev = 0.0
+
+        phi_est_prev   = 0.0
         theta_est_prev = 0.0
-        psi_est_prev = 0.0
+        psi_est_prev   = 0.0
 
         while not rospy.is_shutdown():
-            print 'Inside while'
 
             phi_meas = (self.linear_acceleration.y - self.acc_y_bias) / self.g
             phi_est  = phi_est_prev + (self.angular_velocity.x - self.ang_vel_x_bias) * self.dt
@@ -86,6 +80,8 @@ class Complementary_filter:
             psi = psi_est
             psi_est_prev = psi_est
 
+            # Publish results
+
             phi_msg = Float32()
             phi_msg.data = phi
             self.pub_phi.publish(phi_msg)
@@ -98,7 +94,6 @@ class Complementary_filter:
             psi_msg.data = psi
             self.pub_psi.publish(psi_msg)
 
-
             # tf broadcaster
             roll = theta
             pitch = phi
@@ -110,7 +105,6 @@ class Complementary_filter:
                          rospy.Time.now(),
                          "phone",
                          "world")
-
 
             self.rate.sleep()
 
@@ -143,10 +137,11 @@ class Complementary_filter:
         self.ang_vel_y_bias = ang_vel_y / number_of_points
         self.ang_vel_z_bias = ang_vel_z / number_of_points
 
-        print ' '
-        print 'Calibration finished'
+        print '\n Calibration finished'
 
 if __name__ == '__main__':
-    rospy.init_node('complementary_filter')
-    Complementary_filter()
-    rospy.spin()
+    print 'Starting complementary filter \n'
+    try:
+        Complementary_filter()
+    except rospy.ROSInterruptException:
+		pass
