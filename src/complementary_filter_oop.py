@@ -37,8 +37,8 @@ class Complementary_filter:
         self.ang_vel_y_bias = 0.0
         self.ang_vel_z_bias = 0.0
 
-        self.rho_phi = 0.05    # Scalar tuning constant for phi
-        self.rho_theta = 0.05  # Scalar tuning constant for theta
+        self.rho_phi = 0.9   # Scalar tuning constant for phi
+        self.rho_theta = 0.9  # Scalar tuning constant for theta
 
         self.complementary_filter_loop()
 
