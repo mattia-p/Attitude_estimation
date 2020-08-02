@@ -66,12 +66,14 @@ class Complementary_filter:
 
         while not rospy.is_shutdown():
 
-            phi_meas = (self.linear_acceleration.y - self.acc_y_bias) / self.g
+            # phi_meas = (self.linear_acceleration.y - self.acc_y_bias) / self.g
+            phi_meas = np.arctan((self.linear_acceleration.y - self.acc_y_bias)   / (np.sqrt((self.linear_acceleration.x - self.acc_x_bias)**2 + (self.linear_acceleration.z)**2))) # radians
             phi_est  = phi_est_prev + (self.angular_velocity.x - self.ang_vel_x_bias) * self.dt
             phi = (1 - self.rho_phi) * phi_est + self.rho_phi * phi_meas
             phi_est_prev = phi_est
 
-            theta_meas = - (self.linear_acceleration.x - self.acc_x_bias) / self.g
+            # theta_meas = - (self.linear_acceleration.x - self.acc_x_bias) / self.g
+            theta_meas = np.arctan((self.linear_acceleration.x - self.acc_x_bias) / (np.sqrt((self.linear_acceleration.y - self.acc_y_bias)**2 + (self.linear_acceleration.z)**2))) # radians
             theta_est = theta_est_prev + (self.angular_velocity.y - self.ang_vel_y_bias)* self.dt
             theta = (1 - self.rho_theta) * theta_est + self.rho_theta * theta_meas
             theta_est_prev = theta_est
